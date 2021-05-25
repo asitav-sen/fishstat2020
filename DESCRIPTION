@@ -1,0 +1,13 @@
+Package: fishstat2020
+Title: Indiafishstat2020
+Version: 0.0.0.9000
+Authors@R: person('Asitav', 'Sen', email = '7u90fioq2@relay.firefox.com', role = c('cre', 'aut'))
+Description: India Fisheries Statistics 2020.
+License: MIT + file LICENSE
+Imports: 
+    config (>= 0.3.1),
+    golem (>= 0.3.1),
+    shiny (>= 1.6.0)
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.1
