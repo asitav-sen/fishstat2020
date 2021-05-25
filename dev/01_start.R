@@ -20,11 +20,11 @@
 ## 
 golem::fill_desc(
   pkg_name = "fishstat2020", # The Name of the package containing the App 
-  pkg_title = "PKG_TITLE", # The Title of the package containing the App 
-  pkg_description = "PKG_DESC.", # The Description of the package containing the App 
-  author_first_name = "AUTHOR_FIRST", # Your First Name
-  author_last_name = "AUTHOR_LAST", # Your Last Name
-  author_email = "AUTHOR@MAIL.COM", # Your Email
+  pkg_title = "Indiafishstat2020", # The Title of the package containing the App 
+  pkg_description = "India Fisheries Statistics 2020.", # The Description of the package containing the App 
+  author_first_name = "Asitav", # Your First Name
+  author_last_name = "Sen", # Your Last Name
+  author_email = "7u90fioq2@relay.firefox.com", # Your Email
   repo_url = NULL # The URL of the GitHub Repo (optional) 
 )     
 
@@ -37,7 +37,7 @@ usethis::use_mit_license( "Golem User" )  # You can set another license here
 usethis::use_readme_rmd( open = FALSE )
 usethis::use_code_of_conduct()
 usethis::use_lifecycle_badge( "Experimental" )
-usethis::use_news_md( open = FALSE )
+#usethis::use_news_md( open = FALSE )
 
 ## Use git ----
 usethis::use_git()
