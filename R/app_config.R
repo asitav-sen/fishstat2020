@@ -9,7 +9,7 @@
 #' 
 #' @noRd
 app_sys <- function(...){
-  system.file(..., package = "fishstat2020")
+  system.file(..., package = "Indiafishstat2020")
 }
 
 

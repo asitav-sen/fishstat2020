@@ -15,27 +15,33 @@
 
 ## Dependencies ----
 ## Add one line by package you want to add as dependency
-usethis::use_package( "thinkr" )
+usethis::use_package( "dplyr" )
+usethis::use_package( "plotly" )
+usethis::use_package("shinycssloaders")
+usethis::use_package("bs4Dash")
 
 ## Add modules ----
 ## Create a module infrastructure in R/
-golem::add_module( name = "name_of_module1" ) # Name of the module
-golem::add_module( name = "name_of_module2" ) # Name of the module
+golem::add_module( name = "barchart" ) # Name of the module
+golem::add_module( name = "textop" ) # Name of the module
+golem::add_module( name = "descbox" ) 
+golem::add_module( name = "infobox" )
+golem::add_module( name = "horbarchart" )
 
 ## Add helper functions ----
 ## Creates fct_* and utils_*
-golem::add_fct( "helpers" ) 
+golem::add_fct( "helperfuncs" ) 
 golem::add_utils( "helpers" )
 
 ## External resources
 ## Creates .js and .css files at inst/app/www
-golem::add_js_file( "script" )
-golem::add_js_handler( "handlers" )
-golem::add_css_file( "custom" )
+#golem::add_js_file( "script" )
+#golem::add_js_handler( "handlers" )
+#golem::add_css_file( "custom" )
 
 ## Add internal datasets ----
 ## If you have data in your package
-usethis::use_data_raw( name = "my_dataset", open = FALSE ) 
+#usethis::use_data_raw( name = "production", open = T ) 
 
 ## Tests ----
 ## Add one line by test you want to create
