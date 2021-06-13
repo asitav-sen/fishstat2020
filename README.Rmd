@@ -11,6 +11,7 @@ knitr::opts_chunk$set(
   fig.path = "man/figures/README-",
   out.width = "100%"
 )
+library(plotly)
 ```
 
 # fishstat2020
@@ -36,3 +37,24 @@ install.packages("fishstat2020")
 ## Code of Conduct
 
 Please note that the fishstat2020 project is released with a [Contributor Code of Conduct](https://contributor-covenant.org/version/2/0/CODE_OF_CONDUCT.html). By contributing to this project, you agree to abide by its terms.
+
+
+
+
+```{r}
+url<-'https://raw.githubusercontent.com/Subhash9325/GeoJson-Data-of-Indian-States/a8f711ac692185bad60db4240a3858bf68708eda/Indian_States'
+geojson<-rjson::fromJSON(file=url)
+fig <- plot_ly() 
+fig <- fig %>% add_trace(
+    type="choropleth",
+    geojson=geojson,
+    locations=df$district,
+    z=df$Bergeron,
+    colorscale="Viridis",
+    featureidkey="properties.district"
+  )
+```
+
+
+
+

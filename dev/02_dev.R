@@ -27,6 +27,10 @@ golem::add_module( name = "textop" ) # Name of the module
 golem::add_module( name = "descbox" ) 
 golem::add_module( name = "infobox" )
 golem::add_module( name = "horbarchart" )
+golem::add_module( name = "overlayedbar" )
+golem::add_module( name = "taybeel" )
+golem::add_module( name = "infra" )
+golem::add_module( name = "relief" )
 
 ## Add helper functions ----
 ## Creates fct_* and utils_*

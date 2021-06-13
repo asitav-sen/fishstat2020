@@ -24,18 +24,21 @@ mod_horbarchart_server <- function(id, datatoplot, title="plot", xtitle="", ytit
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     output$hbarchart<-renderPlotly({
+      
       datatoplot %>% 
         plot_ly(
           y =  ~name,
           x =  ~value,
           type = "bar",
-          #opacity = 0.7, 
-          source = src
+          source = src,
+          marker = list(color = "antiquewhite2",
+                        line = list(color = 'white',
+                                    width = 1.5))
         ) %>%
         layout(
           title= "",
-          xaxis = list(title = xtitle, color = "white"),
-          yaxis = list(title = ytitle, color = "white"),
+          xaxis = list(title = xtitle, color = "white", showgrid=F),
+          yaxis = list(title = ytitle, color = "white", showgrid=F),
           plot_bgcolor = 'transparent',
           paper_bgcolor = 'transparent',
           hoverlabel=list(bgcolor="black"),

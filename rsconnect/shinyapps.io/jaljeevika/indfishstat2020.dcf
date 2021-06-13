@@ -1,0 +1,13 @@
+name: indfishstat2020
+title: indfishstat2020
+username:
+account: jaljeevika
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 4207862
+bundleId: 4660203
+url: https://jaljeevika.shinyapps.io/indfishstat2020/
+when: 1622460545.24352
+lastSyncTime: 1622460545.24354
+asMultiple: FALSE
+asStatic: FALSE

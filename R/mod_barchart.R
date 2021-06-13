@@ -21,7 +21,7 @@ mod_barchart_ui <- function(id){
     
 #' barchart Server Functions
 #' @noRd 
-mod_barchart_server <- function(id, datatoplot, title="plot", xtitle="", ytitle="", src="A", orient="v"){
+mod_barchart_server <- function(id, datatoplot, title="plot", xtitle="", ytitle="", src="A", orient="v", lo='h'){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     output$barchart<- renderPlotly({
@@ -31,14 +31,18 @@ mod_barchart_server <- function(id, datatoplot, title="plot", xtitle="", ytitle=
           x =  ~name,
           y =  ~value,
           type = "bar",
+          #colors = c("antiquewhite2", "azure3", "gray96","khaki3", "lightblue1", "gray67"),
           #opacity = 0.7, 
           source = src,
-          orientation = orient
+          orientation = orient,
+          marker = list(color = "antiquewhite2",
+                        line = list(color = 'white',
+                                    width = 1.5))
         ) %>%
         layout(
           title= "",
-          xaxis = list(title = xtitle, color = "white"),
-          yaxis = list(title = ytitle, color = "white"),
+          xaxis = list(title = xtitle, color = "white", showgrid=F),
+          yaxis = list(title = ytitle, color = "white", showgrid=F),
           plot_bgcolor = 'transparent',
           paper_bgcolor = 'transparent',
           hoverlabel=list(bgcolor="black"),
@@ -63,15 +67,19 @@ mod_barchart_server <- function(id, datatoplot, title="plot", xtitle="", ytitle=
             y =  ~value,
             type = "bar",
             color= ~Type,
-            #opacity = 0.7, 
+            colors = c("dodgerblue", "cadetblue3", "cornflowerblue","deepskyblue3", "lightblue1", "darkslategray3"),
+            opacity = ~Type, 
             source = src,
-            orientation = orient
+            orientation = orient,
+            marker = list(#color = 'transparent',
+                          line = list(color = 'white',
+                                      width = 1.5))
           ) %>%
           layout(
             #barmode = 'stack',
             title= "",
-            xaxis = list(title = xtitle, color = "white"),
-            yaxis = list(title = ytitle, color = "white"),
+            xaxis = list(title = xtitle, color = "white", showgrid=F),
+            yaxis = list(title = ytitle, color = "white", showgrid=F),
             plot_bgcolor = 'transparent',
             paper_bgcolor = 'transparent',
             hoverlabel=list(bgcolor="black"),
@@ -84,7 +92,7 @@ mod_barchart_server <- function(id, datatoplot, title="plot", xtitle="", ytitle=
                           xref = "paper", yref = "paper",
                           xanchor = "left", yanchor = "bottom"
             ),
-            legend = list(orientation = 'h', font=list(color = "white"))
+            legend = list(orientation = lo, font=list(color = "white"))
           ) %>% config(displayModeBar = FALSE) %>% 
           event_register("plotly_click")
       }
@@ -92,8 +100,6 @@ mod_barchart_server <- function(id, datatoplot, title="plot", xtitle="", ytitle=
     })
     
 
-    # eventClick <- reactive(event_data("plotly_click", source = src))
-    # return(eventClick)
  
   })
 }
