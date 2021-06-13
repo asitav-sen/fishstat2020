@@ -15,6 +15,7 @@ app_ui <- function(request) {
     
     dashboardPage(
       fresh::use_theme("./www/daark.css"),
+      tags$head(includeHTML(("ga.html"))),
       header = dashboardHeader(
         title=dashboardBrand(
           title = "India FishStat 2020",
@@ -281,13 +282,22 @@ app_ui <- function(request) {
                 ),
                 tabPanel(
                   title = "Fishing Population",
-                    h4("Total fishing population"),
-                    br(),
-                    mod_barchart_ui("totfishpop"),
-                    br(),
-                    "Fishing population per 1000",
-                    br(),
-                    mod_barchart_ui("fishpoppert"),
+                  fluidRow(
+                    column(
+                      width = 6,
+                      h4("Total fishing population"),
+                      br(),
+                      #mod_barchart_ui("totfishpop"),
+                      htmlOutput("totfishpop"),
+                    ),
+                    column(
+                      width = 6,
+                      h4("Fishing population per 1000"),
+                      br(),
+                      mod_barchart_ui("fishpoppert"),
+                    )
+                  ),
+                  br(),
                   tags$hr(),
                   br(),
                   h4("Infrastructure Investments since 2015-16"),

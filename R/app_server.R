@@ -5,53 +5,76 @@
 #' @import shiny 
 #' @import waiter
 #' @import plotly
+#' @importFrom googleVis renderGvis gvisGeoChart
 #' @noRd
 app_server <- function(input, output, session) {
   options(shiny.reactlog = TRUE)
   # Your application server logic
   # Import production data
-  fish.prod <-
-    read.csv(
-      "https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=1096991567&single=true&output=csv"
-    )
-  fish.seed <- read.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=702957413&single=true&output=csv")
-  inland.resources<- read.csv(
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=837622468&single=true&output=csv"
-                              )
-  marine.resources<- read.csv(
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=1167008367&single=true&output=csv"
-                              )
-  species.prod<- read.csv(
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=259951981&single=true&output=csv"
+  withProgress(
+    message = "Seeking approval",
+    detail = "Downloading data",
+    value = 0,
+    {
+      setProgress(value = 1, message = "सब्र का फ़ल Data होता है ")
+      fish.prod <-
+        read.csv(
+          "https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=1096991567&single=true&output=csv"
+        )
+      setProgress(value = 2, message = "सब्र का फ़ल Data होता है ")
+      fish.seed <- read.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=702957413&single=true&output=csv")
+      inland.resources<- read.csv(
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=837622468&single=true&output=csv"
+      )
+      setProgress(value = 3, message = "सब्र का फ़ल Data होता है ")
+      marine.resources<- read.csv(
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=1167008367&single=true&output=csv"
+      )
+      setProgress(value = 4, message = "सब्र का फ़ल Data होता है ")
+      species.prod<- read.csv(
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=259951981&single=true&output=csv"
+      )
+      
+      setProgress(value = 5, message = "सब्र का फ़ल Data होता है ")
+      fish.eng<- read.csv(
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=1393998625&single=true&output=csv"
+      )
+      
+      setProgress(value =6, message = "सब्र का फ़ल Data होता है ")
+      fish.gen<- read.csv(
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=1352918917&single=true&output=csv"
+      )
+      
+      setProgress(value = 7, message = "सब्र का फ़ल Data होता है ")
+      fish.dis<- read.csv(
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=2034371076&single=true&output=csv"
+      )
+      setProgress(value = 8, message = "सब्र का फ़ल Data होता है ")
+      cons<- read.csv(
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=1938251657&single=true&output=csv"
+      )
+      
+      setProgress(value = 9, message = "सब्र का फ़ल Data होता है ")
+      ind.export<-read.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=54953417&single=true&output=csv")
+      
+      setProgress(value = 10, message = "सब्र का फ़ल Data होता है ")
+      global.prod<-read.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=141134708&single=true&output=csv")
+      
+      setProgress(value = 11, message = "सब्र का फ़ल Data होता है ")
+      veg.pop<- read.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=1213657637&single=true&output=csv")
+      
+      setProgress(value = 12, message = "सब्र का फ़ल Data होता है ")
+      trainings<- read.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=386582880&single=true&output=csv")
+      
+      setProgress(value = 13, message = "सब्र का फ़ल Data होता है ")
+      infra<- read.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=1680610277&single=true&output=csv")
+      setProgress(value = 14, message = "सब्र का फ़ल Data होता है ")
+      relief.dat<- read.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=1310395062&single=true&output=csv")
+      
+      
+    }
+    
   )
-  
-  fish.eng<- read.csv(
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=1393998625&single=true&output=csv"
-  )
-  
-  fish.gen<- read.csv(
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=1352918917&single=true&output=csv"
-  )
-  
-  fish.dis<- read.csv(
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=2034371076&single=true&output=csv"
-  )
-  
-  cons<- read.csv(
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=1938251657&single=true&output=csv"
-  )
-  
-  ind.export<-read.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=54953417&single=true&output=csv")
-  
-  global.prod<-read.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=141134708&single=true&output=csv")
-  
-  veg.pop<- read.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=1213657637&single=true&output=csv")
-  
-  trainings<- read.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=386582880&single=true&output=csv")
-  
-  infra<- read.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=1680610277&single=true&output=csv")
-  
-  relief.dat<- read.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vTd25DeVpaTzt2LvB1afoZ4b-GbbMIZDp4z0PQPmT8lsB-DqClxkmFu09INxn_MZ_z1ZnQNp8LWdIhv/pub?gid=1310395062&single=true&output=csv")
   
   prod.overall <- fish.prod.byyear(fish.prod)
   mod_barchart_server("prod_by_year", datatoplot = prod.overall, ytitle =
@@ -318,7 +341,23 @@ app_server <- function(input, output, session) {
   
   mod_barchart_server("trainings", train.cal(trainings), xtitle="", ytitle="Trained People",lo="v")
   
-  mod_barchart_server("totfishpop", fishing.pop.cal(fish.dis), xtitle="", ytitle="Fishing population",lo="v")
+ # mod_barchart_server("totfishpop", fishing.pop.cal(fish.dis), xtitle="", ytitle="Fishing population",lo="v")
+  fis.pop<-fishing.pop.cal(fish.dis)
+
+  output$totfishpop<-renderGvis(
+    {
+      gvisGeoChart(
+        fis.pop,
+        locationvar = "name",
+        colorvar = "value",
+        #hovervar = paste(name, ". Fishing population: ",value),
+        options=list(region="IN", displayMode="regions", 
+                     resolution="provinces", backgroundColor="transparent",
+                     datalessRegionColor="transparent",
+                     domain="IN")
+      )
+    }
+  )
   mod_barchart_server("fishpoppert", fishing.pop.per.cal(fish.dis), xtitle="", ytitle="Fishing population per thousand",lo="v")
   
   mod_infra_server("infradetails",infra(infra))

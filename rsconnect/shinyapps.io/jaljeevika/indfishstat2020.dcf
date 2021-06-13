@@ -5,9 +5,10 @@ account: jaljeevika
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 4207862
-bundleId: 4660203
+bundleId: 4710695
 url: https://jaljeevika.shinyapps.io/indfishstat2020/
-when: 1622460545.24352
-lastSyncTime: 1622460545.24354
+when: 1623576300.41034
+lastSyncTime: 1623576300.41036
 asMultiple: FALSE
 asStatic: FALSE
+ignoredFiles: LICENSE|LICENSE.md|README.Rmd|tests/spelling.R|tests/testthat/test-golem-recommended.R|tests/testthat.R
