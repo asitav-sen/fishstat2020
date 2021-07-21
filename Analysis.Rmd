@@ -1,0 +1,630 @@
+---
+title: "Analysis"
+author: "Scary Scarecrow"
+date: "18/07/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(highcharter)
+library(leaflet)
+library(dplyr)
+library(tidyr)
+
+fish.prod <- readRDS("./data/fishprod.rds")
+fish.seed <- readRDS("./data/fish_seed.rds")
+inland.resources<- readRDS("./data/inland_resources.rds")
+marine.resources<- readRDS("./data/marine_resources.rds")
+species.prod<- readRDS("./data/species_prod.rds")
+fish.eng<- readRDS("./data/engagement.rds")
+fish.gen<- readRDS("./data/fish_gen.rds")
+fish.dis<- readRDS("./data/districts.rds")
+cons<- readRDS("./data/consumption.rds")
+ind.export<-readRDS("./data/ind_export.rds")
+global.prod<-readRDS("./data/global_prod.rds")
+veg.pop<- readRDS("./data/veg_pop.rds")
+trainings<- readRDS("./data/trainings.rds")
+infra<- readRDS("./data/infra.rds")
+relief.dat<- readRDS("./data/relief.rds")
+
+         
+```
+
+
+
+
+```{r}
+
+prod_year<-
+  fish.prod %>% 
+  group_by(Year) %>% 
+  summarise(prod=sum(Prod_in_lac_tonne, na.rm = T)) %>% 
+  arrange(prod)
+
+Lvl1dfStatus <-tibble(
+                       name = prod_year$Year,
+                       y = prod_year$prod,
+                       drilldown = tolower(name)
+                     )
+
+
+Level_2_Drilldowns <- lapply(unique(prod_year$Year), function(x_level) {
+                       prod.state <- fish.prod[fish.prod$Year == x_level, ]
+                       prod.state <- prod.state %>%
+                         group_by(State) %>%
+                         summarize(prod = sum(Prod_in_lac_tonne, na.rm = T))
+                       prod.state <- arrange(prod.state, desc(prod)) ###CHECK
+                       Lvl2dfStatus <-
+                         tibble(
+                           name = prod.state$State,
+                           y = prod.state$prod,
+                           drilldown = tolower(paste(x_level, name, sep = "_"))
+                         )
+                       list(
+                         id = tolower(x_level),
+                         type = "column",
+                         data = list_parse(Lvl2dfStatus),
+                         name = "Production by State"
+                       )
+                     })
+
+ Level_3_Drilldowns <-
+                     lapply(unique(fish.prod$Year), function(x_level) {
+                       prod.state <- fish.prod[fish.prod$Year == x_level, ]
+                       lapply(unique(fish.prod$State), function(y_level) {
+                         prod.type <- fish.prod[fish.prod$State == y_level, ]
+                         prod.type <- prod.type %>%
+                           group_by(Type) %>%
+                           summarize(prod = sum(Prod_in_lac_tonne, na.rm = T))
+                         prod.type <- arrange(prod.type, desc(prod))
+                         Lvl3dfStatus <-
+                           tibble(name = prod.type$Type, y = prod.type$prod)
+                         list(
+                           id = tolower(paste(x_level, y_level, sep = "_")),
+                           type = "column",
+                           data = list_parse2(Lvl3dfStatus),
+                           name = "Production by type"
+                         )
+                       })
+                     }) %>% unlist(recursive = FALSE)
+ thm<-hc_theme_merge(
+  hc_theme_alone(),
+  hc_theme(chart=
+             list(
+               backgroundColor = "transparent"   
+             )
+  )
+)
+
+    prod.chart<-highchart() %>%
+      hc_xAxis(type = "category") %>%
+      hc_add_series(
+        Lvl1dfStatus,
+        "column",
+        hcaes(x = name, y = y),
+        name = "India Production",
+        showInLegend = F
+      ) %>%
+      hc_plotOptions(column = list(stacking = "normal"),
+                     lang = list(drillUpText = "Back")) %>%
+      hc_drilldown(
+        allowPointDrilldown = TRUE,
+        series = c(Level_2_Drilldowns, Level_3_Drilldowns)
+      ) %>%
+      hc_yAxis(title = list(text = "Production in lac (100k) Tonne")) %>%
+      hc_colors("white") %>%
+      hc_title(text="Fish production in India",
+               style = list(color = "white")) %>% 
+      hc_subtitle(text="Click on the bar to drill down",
+                  style = list(color = "white")) %>% 
+      hc_tooltip() %>%
+      hc_add_theme(hc_theme_alone()) %>%
+      hc_exporting(enabled = TRUE, # always enabled
+                   filename = "Production_Data")
+    saveRDS(prod.chart,"./data/production_chart.rds")
+
+
+```
+
+
+
+```{r}
+
+dat<-old.states@data
+
+states<-readRDS("./data/indiastates.rds")
+#saveRDS(states,"./data/indiastates.rds")
+
+# states@data <-
+# states@data %>% 
+#   left_join(dat, by="ST_NM")
+
+ bins <-
+    c(0,
+      1,
+      5,
+      10,
+      25,
+      50,
+      Inf)
+
+                   dt <- states
+                   pal <-
+                     colorBin("Blues",
+                              domain = dt@data$total_prod,
+                              bins = bins)
+                   labels <- 
+                     sprintf(
+                     "<strong>%s</strong><br/>Production in lac(100 k) Tonne<br/>Total : %g<br/>Inland: %g <br/> Marine: %g",
+                     dt@data$ST_NM,
+                     dt@data$total_prod,
+                     dt@data$Inland,
+                     dt@data$Marine
+                   ) %>% lapply(htmltools::HTML)
+
+                   m<-leaflet(dt) %>%
+                     addProviderTiles("CartoDB.DarkMatterNoLabels", group = "OSM") %>%
+                     addPolygons(
+                       fillColor = ~ pal(total_prod),
+                       weight = 1,
+                       opacity = 1,
+                       color = "white",
+                       dashArray = "3",
+                       fillOpacity = 0.7,
+                       highlight = highlightOptions(
+                         weight = 2,
+                         color = "#666",
+                         dashArray = "",
+                         fillOpacity = 0.7,
+                         bringToFront = TRUE
+                       ),
+                       label = labels,
+                       labelOptions = labelOptions(
+                         style = list("font-weight" = "normal", padding = "3px 8px"),
+                         textsize = "15px",
+                         direction = "auto"
+                       ),
+                       layerId = ~ dt@data$ST_NM
+                     ) %>% 
+                     setView(lat=24.813193, lng = 105.998796, zoom = 4)
+                   m  
+                   saveRDS(m,"./data/mainmap.rds")
+                   
+dat<-states@data
+dat %>% 
+  filter(ST_NM=="Andhra Pradesh")
+
+state_names<-unique(fish.prod$State)
+
+fp<-fish.prod %>% 
+  group_by(Year) %>% 
+  summarise(prod=sum(Prod_in_lac_tonne, na.rm = T))
+
+highchart() %>% 
+  hc_xAxis(type = "category", title=list(text = "Year")) %>% 
+  hc_add_series(
+        fp,
+        "column",
+        hcaes(x = Year, y = prod),
+        name = "India Production",
+        showInLegend = F
+      ) %>% 
+  hc_yAxis(title = list(text = "Production in lac (100k) Tonne")) %>%
+      hc_colors("white") %>%
+      hc_title(text="Fish production in selected state",
+               style = list(color = "white")) %>% 
+      hc_subtitle(text="Click on the bar to drill down",
+                  style = list(color = "white")) %>% 
+      hc_tooltip() %>%
+      hc_add_theme(hc_theme_alone()) %>%
+      hc_exporting(enabled = TRUE, # always enabled
+                   filename = "Production_Data")
+
+
+
+```
+
+
+
+```{r}
+dat %>% 
+  filter(ST_NM=="Andhra Pradesh") %>% 
+  select(c(ST_NM,small_reser,med_large_reser,tanks_ponds,brackish_water,beel_oxbow_lakes,Other.x)) %>% 
+  pivot_longer(cols = c(small_reser,med_large_reser,tanks_ponds,brackish_water,beel_oxbow_lakes,Other.x)) %>% 
+  mutate(name=c("Small Reserviour", "Medium/Large Reserviour", "Tanks/Ponds", "Brackish Water",
+                "Beel/Oxbow/Lakes","Other"), unit=c("Ha","Ha","Ha","Ha","Ha","Ha")) %>% 
+  select(-1)
+
+dat %>% 
+  filter(ST_NM=="Andhra Pradesh") %>% 
+  select(c(ST_NM,`Major Carps`,`Minor Carps`,`Exotic Carps`,`Murrel`,`Catfish`, `Other.y`)) %>% 
+  pivot_longer(cols=c(`Major Carps`,`Minor Carps`,`Exotic Carps`,`Murrel`,`Catfish`, `Other.y`)) %>% 
+  mutate(name=c("Major Carps","Minor Carps","Exotic Carps","Murrel","Catfish","Other"))
+
+highchart() %>% 
+  hc_xAxis(type = "category", title=list(text = "Year")) %>% 
+  hc_add_series(
+        ind.export,
+        "column",
+        hcaes(x = name, y = value),
+        name = "India Export",
+        showInLegend = F
+      ) %>% 
+  hc_yAxis(title = list(text = "Export in MT")) %>%
+      hc_colors("white") %>%
+      hc_title(text="Fish export by India",
+               style = list(color = "white")) %>% 
+      hc_tooltip() %>%
+      hc_add_theme(hc_theme_alone()) %>%
+      hc_exporting(enabled = TRUE, # always enabled
+                   filename = "Export_Data")
+```
+
+
+
+
+```{r}
+consumption.plot<-highchart() %>%
+  hc_xAxis(type = "category") %>%
+  hc_add_series(
+    consumption,
+    "column",
+    hcaes(x = State, y = rural),
+    name = "Rural Consumption",
+    showInLegend = T
+  ) %>%
+  hc_add_series(
+    consumption,
+    "column",
+    hcaes(x = State, y = urban),
+    name = "Urban Consumption",
+    showInLegend = T
+  ) %>%
+  hc_yAxis(title = list(text = "Consumption in kg")#,
+           # plotLines = list(
+           #   list(
+           #     value = 20.3,
+           #     color = "white", 
+           #     zIndex = 1000,
+           #     label = list(
+           #       text = "Global per capita consumption: 20.3 kg p.a.",
+           #       style = list(
+           #         color = "white",
+           #         fontSize = "16px",
+           #         fontWeight = "bold" 
+           #       )
+           #     )
+           #   )
+           # )
+           ) %>%
+  hc_title(text = "Per capita annual consumption",
+           style = list(color = "white")) %>%
+    hc_annotations(
+    list(
+      labels = list(
+        list(point = list(x = 5, y = 2, xAxis = 0, yAxis = 0), text = "Global per capita Consuption: 20.3 kg p.a."),
+        list(point = list(x = 5, y = 2, xAxis = 0, yAxis = 0), text = "Global per capita Consuption: 20.3 kg p.a.")
+      )
+    )
+  ) %>% 
+  hc_tooltip() %>%
+  hc_add_theme(hc_theme_alone()) %>%
+  hc_exporting(enabled = TRUE, # always enabled
+               filename = "fish_consumption") 
+
+saveRDS(consumption.plot,"./data/consumption_plot.rds")
+```
+
+
+
+
+```{r}
+hccolfunc<-function(inputdata=NULL, series_name=NULL, ytitle=NULL,xtitle=NULL, plottitle=NULL, fname=NULL){
+  highchart() %>% 
+          hc_xAxis(type = "category", title=list(text = xtitle)) %>% 
+          hc_add_series(
+            inputdata,
+            "column",
+            hcaes(x = name, y = value),
+            name = series_name,
+            showInLegend = F
+          ) %>% 
+          hc_yAxis(title = list(text = ytitle)) %>%
+          hc_colors("white") %>%
+          hc_title(text=plottitle,
+                   style = list(color = "white")) %>% 
+          hc_tooltip() %>%
+          hc_add_theme(hc_theme_alone()) %>%
+          hc_exporting(enabled = TRUE, # always enabled
+                       filename = fname)
+}
+
+hccolfunc(inputdata=ind.export, series_name="Export by India", ytitle="MT of Fish",xtitle="", plottitle="Fish Export by India", fname="India_Export") 
+hccolfunc(inputdata=global.prod, series_name="Global Production", ytitle="MT of Fish",xtitle="", plottitle="Global Fish Production", fname="Global_prod")
+
+
+```
+
+
+```{r}
+veg.pop<-
+  veg.pop %>% 
+  arrange(veg) 
+
+  veg.plot<-highchart() %>% 
+          hc_xAxis(type = "category", title=list(text = "")) %>% 
+          hc_add_series(
+            veg.pop,
+            "column",
+            hcaes(x = State, y = veg),
+            name = "Vegetarian Population",
+            showInLegend = T
+          ) %>% 
+    hc_add_series(
+            veg.pop,
+            "column",
+            hcaes(x = State, y = non_veg),
+            name = "Non-Vegetarian Population",
+            showInLegend = T
+          ) %>% 
+          hc_yAxis(title = list(text = "Population")) %>%
+          #hc_colors("white") %>%
+          hc_title(text="Vegetarian Population in India",
+                   style = list(color = "white")) %>% 
+          hc_tooltip() %>%
+          hc_add_theme(hc_theme_alone()) %>%
+          hc_exporting(enabled = TRUE, # always enabled
+                       filename = "Veg_pop")
+  
+  saveRDS(veg.plot,"./data/veg_plot.rds")
+
+```
+
+
+```{r}
+productivity<-
+fish.prod %>% 
+  filter(Year=="2019-20") %>% 
+  pivot_wider(names_from = Type,values_from=Prod_in_lac_tonne) %>% 
+  left_join(fish.gen, by="State") %>% 
+  mutate(across(everything(), ~ ifelse(is.na(.), 0, .))) %>% 
+  mutate(Inland_fishing_pop=Inland_Male+Inland_Female, Marine_fishing_pop=Marine_Male+Marine_Female) %>% 
+  mutate(Inland_Productivity=Inland*100000/Inland_fishing_pop, Marine_Productivity=Marine*100000/Marine_fishing_pop) %>% 
+  arrange(Inland_Productivity)
+
+productivity.plot<-
+highchart() %>% 
+          hc_xAxis(type = "category", title=list(text = "")) %>% 
+          hc_add_series(
+            productivity,
+            "column",
+            hcaes(x = State, y = Inland_Productivity),
+            name = "Output per fisherwoman, Inland",
+            showInLegend = T
+          ) %>% 
+    hc_add_series(
+            productivity,
+            "column",
+            hcaes(x = State, y = Marine_Productivity),
+            name = "Output per fisherwoman, Marine",
+            showInLegend = T
+          ) %>% 
+          hc_yAxis(title = list(text = "Output in Tonne")) %>%
+          hc_annotations(
+    list(
+      labels = list(
+        list(point = list(x = 5, y = 20, xAxis = 0, yAxis = 0), text = "Average of Inland in India: 0.45 Tonnes per person"),
+        list(point = list(x = 5, y = 15, xAxis = 0, yAxis = 0), text = "Average of Marine in India: 0.75 Tonnes per person"),
+        list(point = list(x = 5, y = 10, xAxis = 0, yAxis = 0), text = "Average of China in 2010: 2 Tonnes per person"),
+        list(point = list(x = 5, y = 5, xAxis = 0, yAxis = 0), text = "Average of Norway in 2010: 172 Tonnes per person")
+      )
+    )
+  ) %>% 
+          hc_title(text="Output per fisherwoman",
+                   style = list(color = "white")) %>% 
+          hc_tooltip() %>%
+          hc_add_theme(hc_theme_alone()) %>%
+          hc_exporting(enabled = TRUE, # always enabled
+                       filename = "Productivity")
+saveRDS(productivity.plot,"./data/productivity_plot.rds")
+
+productivity %>% 
+  filter(Marine_Productivity<0.75) %>% 
+  saveRDS("./data/lowmarine.rds")
+
+```
+
+
+
+```{r}
+trainings<-readRDS("./data/trainings.rds")
+trainings<-
+trainings %>% 
+  group_by(State) %>% 
+  summarise(fishermen_trained=sum(fishermen_trained,na.rm = T)) %>% 
+  arrange(fishermen_trained) %>% 
+  rename(name=State, value=fishermen_trained)
+
+hccolfunc(inputdata=trainings, series_name="People trained", ytitle="No. of Trainings",xtitle="", plottitle="Number of fisherwomen trained since 2015-16", fname="trainings") %>% saveRDS("./data/trainingplot.rds")
+
+fish.gen
+ states@data%>% 
+  left_join(fish.dis, by=c("ST_NM"="State"))
+ 
+  binsnew <-
+    c(0,
+      10000,
+      200000,
+      500000,
+      1000000,
+      2000000,
+      Inf)
+  
+                   dt <- states
+                   dt@data<-
+                     dt@data%>% 
+                   left_join(fish.dis, by=c("ST_NM"="State"))
+                   dt@data$fishermen<-dt@data$Inland_Male+dt@data$Inland_Female+dt@data$Marine_Male+dt@data$Marine_Female
+                   pal <-
+                     colorBin("Blues",
+                              domain = dt@data$fishermen,
+                              bins = binsnew)
+                    labels <- 
+                     sprintf(
+                     "<strong>%s</strong><br/>Total fishing population : %g<br/>Fishing population per 1000 : %g",
+                     dt@data$ST_NM,
+                     dt@data$fishermen,
+                     dt@data$fish_per_1000
+                   ) %>% lapply(htmltools::HTML)
+
+ 
+ leaflet(dt) %>%
+                     addProviderTiles("CartoDB.DarkMatterNoLabels", group = "OSM") %>%
+                     addPolygons(
+                       fillColor = ~ pal(fishermen),
+                       weight = 1,
+                       opacity = 1,
+                       color = "white",
+                       dashArray = "3",
+                       fillOpacity = 0.7,
+                       highlight = highlightOptions(
+                         weight = 2,
+                         color = "#666",
+                         dashArray = "",
+                         fillOpacity = 0.7,
+                         bringToFront = TRUE
+                       ),
+                       label = labels,
+                       labelOptions = labelOptions(
+                         style = list("font-weight" = "normal", padding = "3px 8px"),
+                         textsize = "15px",
+                         direction = "auto"
+                       )
+                     ) %>% 
+   saveRDS("./data/fishingpopulationmap.rds")
+  
+```
+
+
+
+```{r}
+fd<-fish.dis %>% 
+  rename(name=State, value=fish_per_1000) %>% 
+  select(name,value) %>% 
+  arrange(value)
+  
+
+hccolfunc(inputdata=fd, series_name="Fishing population", ytitle="Number",xtitle="", plottitle="Fishing population per 1000", fname="fishing_population") %>% 
+  saveRDS("./data/fishingpoppert.rds")
+```
+
+
+
+
+```{r}
+infra %>% 
+  group_by(State, resource, type) %>% 
+  summarise(Area_ha=sum(Area_ha,na.rm = T), Number=sum(Number,na.rm = T))
+
+relief.dat %>% 
+  group_by(State) %>% 
+  summarise(total_amount=sum(total_amount,na.rm = T), fishermen=sum(fishermen, na.rm = T))
+```
+
+
+
+```{r}
+fish.seed
+
+fish_year<-
+  fish.seed %>% 
+  group_by(Year) %>% 
+  summarise(prod=sum(Prod_lac_fry, na.rm = T)) %>% 
+  arrange(prod)
+
+Lvl1dfStatus <-tibble(
+                       name = fish_year$Year,
+                       y = fish_year$prod,
+                       drilldown = tolower(name)
+                     )
+
+
+Level_2_Drilldowns <- lapply(unique(fish_year$Year), function(x_level) {
+                       fish.state <- fish.seed[fish.seed$Year == x_level, ]
+                       fish.state <- fish.state %>%
+                         group_by(State) %>%
+                         summarize(prod = sum(Prod_lac_fry, na.rm = T))
+                       fish.state <- arrange(fish.state, desc(prod)) ###CHECK
+                       Lvl2dfStatus <-
+                         tibble(
+                           name = fish.state$State,
+                           y = fish.state$prod,
+                           drilldown = tolower(paste(x_level, name, sep = "_"))
+                         )
+                       list(
+                         id = tolower(x_level),
+                         type = "column",
+                         data = list_parse(Lvl2dfStatus),
+                         name = "Production by State"
+                       )
+                     })
+
+ thm<-hc_theme_merge(
+  hc_theme_alone(),
+  hc_theme(chart=
+             list(
+               backgroundColor = "transparent"   
+             )
+  )
+)
+
+    seed.chart<-highchart() %>%
+      hc_xAxis(type = "category") %>%
+      hc_add_series(
+        Lvl1dfStatus,
+        "column",
+        hcaes(x = name, y = y),
+        name = "India Production",
+        showInLegend = F
+      ) %>%
+      hc_plotOptions(column = list(stacking = "normal"),
+                     lang = list(drillUpText = "Back")) %>%
+      hc_drilldown(
+        allowPointDrilldown = TRUE,
+        series = c(Level_2_Drilldowns)
+      ) %>%
+      hc_yAxis(title = list(text = "Production in lac (100k) Fry")) %>%
+      hc_colors("white") %>%
+      hc_title(text="Fish Seed production in India",
+               style = list(color = "white")) %>% 
+      hc_subtitle(text="Click on the bar to drill down",
+                  style = list(color = "white")) %>% 
+      hc_tooltip() %>%
+      hc_add_theme(hc_theme_alone()) %>%
+      hc_exporting(enabled = TRUE, # always enabled
+                   filename = "Seed_Production_Data")
+    saveRDS(seed.chart,"./data/seed_chart.rds")
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
