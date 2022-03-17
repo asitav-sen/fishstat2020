@@ -51,7 +51,7 @@ fig <- fig %>% add_trace(
     locations=df$district,
     z=df$Bergeron,
     colorscale="Viridis",
-    featureidkey="properties.district"
+    #featureidkey="properties.district"
   )
 ```
 
